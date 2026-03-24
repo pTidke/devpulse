@@ -1,125 +1,280 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import './App.css'
 
-const PROJECTS = [
-  { name: 'fraud-detection-pipeline', desc: 'Real-time transaction scoring with XGBoost', lang: 'Python', status: 'live', stars: 42, color: '#60a5fa' },
-  { name: 'global-health-dashboard', desc: 'WHO-funded disease impact visualization', lang: 'React', status: 'live', stars: 31, color: '#4ade80' },
-  { name: 'time-series-forecaster', desc: 'Auto insurance claims forecasting engine', lang: 'Python', status: 'building', stars: 18, color: '#fb923c' },
+const FEATURES = [
+  {
+    icon: '⚡',
+    title: 'Zero Config Deploys',
+    desc: 'Push to GitHub. Vercel detects your framework automatically and builds it. No YAML, no Dockerfiles, no setup.',
+    color: '#e8f542',
+  },
+  {
+    icon: '🌍',
+    title: 'Global Edge Network',
+    desc: 'Your app is served from 100+ locations worldwide. Users get the nearest server — automatically.',
+    color: '#60a5fa',
+  },
+  {
+    icon: '🔍',
+    title: 'Preview Deployments',
+    desc: 'Every pull request gets its own live URL. Share with your team before anything merges to main.',
+    color: '#4ade80',
+  },
+  {
+    icon: '🔒',
+    title: 'Secure Env Variables',
+    desc: 'Add API keys and secrets in the dashboard. Never commit a .env file to GitHub again.',
+    color: '#fb923c',
+  },
+  {
+    icon: '📊',
+    title: 'Analytics & Insights',
+    desc: 'Real user performance data out of the box. See Core Web Vitals, load times, and visitor trends.',
+    color: '#c084fc',
+  },
+  {
+    icon: '↩️',
+    title: 'Instant Rollbacks',
+    desc: 'Something broke in production? Roll back to any previous deployment in one click.',
+    color: '#f87171',
+  },
 ]
 
-const STACK = ['React', 'Python', 'PySpark', 'AWS', 'PostgreSQL', 'Airflow', 'Docker', 'XGBoost']
+const STEPS = [
+  { num: '01', title: 'Push to GitHub', desc: 'Commit your code and push to any branch.', icon: '📁' },
+  { num: '02', title: 'Vercel Detects & Builds', desc: 'Auto-detects React, Next.js, Vue, Svelte and more. Runs your build command.', icon: '🔨' },
+  { num: '03', title: 'Deployed to Edge', desc: 'Your app goes live on a global CDN in seconds. You get a URL instantly.', icon: '🚀' },
+  { num: '04', title: 'Every PR gets a Preview', desc: 'Open a pull request → get a unique live URL for that branch automatically.', icon: '🔗' },
+]
 
-const STATUS_CONFIG = {
-  live:     { label: 'Live',     color: '#4ade80' },
-  building: { label: 'Building', color: '#fb923c' },
-  paused:   { label: 'Paused',   color: '#666' },
+const FRAMEWORKS = ['Next.js', 'React', 'Vue', 'Svelte', 'Nuxt', 'Astro', 'Remix', 'Angular']
+
+const TIMELINE = [
+  { time: '0s',   label: 'You push to GitHub' },
+  { time: '5s',   label: 'Vercel detects the framework' },
+  { time: '15s',  label: 'Dependencies installed' },
+  { time: '28s',  label: 'Build complete' },
+  { time: '32s',  label: '🎉 Live on global edge' },
+]
+
+function useInView(ref) {
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold: 0.15 })
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [ref])
+  return inView
 }
 
-function useTyped(words, speed = 80, pause = 1800) {
-  const [display, setDisplay] = useState('')
-  const [wordIdx, setWordIdx] = useState(0)
-  const [charIdx, setCharIdx] = useState(0)
-  const [deleting, setDeleting] = useState(false)
+function AnimatedTimeline() {
+  const ref = useRef()
+  const inView = useInView(ref)
+  const [active, setActive] = useState(-1)
 
   useEffect(() => {
-    const word = words[wordIdx]
-    let timeout
-    if (!deleting && charIdx < word.length) {
-      timeout = setTimeout(() => setCharIdx(c => c + 1), speed)
-    } else if (!deleting && charIdx === word.length) {
-      timeout = setTimeout(() => setDeleting(true), pause)
-    } else if (deleting && charIdx > 0) {
-      timeout = setTimeout(() => setCharIdx(c => c - 1), speed / 2)
-    } else if (deleting && charIdx === 0) {
-      setDeleting(false)
-      setWordIdx(i => (i + 1) % words.length)
-    }
-    setDisplay(word.slice(0, charIdx))
-    return () => clearTimeout(timeout)
-  }, [charIdx, deleting, wordIdx, words, speed, pause])
+    if (!inView) return
+    let i = 0
+    const interval = setInterval(() => {
+      setActive(i)
+      i++
+      if (i >= TIMELINE.length) clearInterval(interval)
+    }, 600)
+    return () => clearInterval(interval)
+  }, [inView])
 
-  return display
-}
-
-function StatusDot({ status }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.paused
   return (
-    <span className="status-dot-wrap">
-      {status === 'live' && <span className="status-ping" style={{ background: cfg.color }} />}
-      <span className="status-dot" style={{ background: cfg.color }} />
-      <span className="status-label" style={{ color: cfg.color }}>{cfg.label}</span>
-    </span>
+    <div ref={ref} className="timeline">
+      {TIMELINE.map((t, i) => (
+        <div key={i} className={`tl-row ${active >= i ? 'tl-active' : ''}`}>
+          <div className="tl-time">{t.time}</div>
+          <div className="tl-line-wrap">
+            <div className="tl-dot" />
+            {i < TIMELINE.length - 1 && <div className="tl-connector" />}
+          </div>
+          <div className="tl-label">{t.label}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 
-function ProjectCard({ project, index }) {
-  const [hovered, setHovered] = useState(false)
+function DeployButton() {
+  const [state, setState] = useState('idle')
+
+  const handleDeploy = () => {
+    if (state !== 'idle') return
+    setState('building')
+    setTimeout(() => setState('done'), 2800)
+    setTimeout(() => setState('idle'), 5000)
+  }
+
   return (
-    <div className="project-card" style={{ animationDelay: `${index * 100}ms` }}
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <div className="project-top">
-        <span className="project-name">{project.name}</span>
-        <StatusDot status={project.status} />
+    <div className="deploy-demo">
+      <div className="deploy-terminal">
+        <div className="terminal-dots">
+          <span /><span /><span />
+        </div>
+        <div className="terminal-body">
+          {state === 'idle' && <span className="t-muted">$ git push origin main<span className="t-cursor">_</span></span>}
+          {state === 'building' && (
+            <div className="t-building">
+              <div className="t-line">$ git push origin main</div>
+              <div className="t-line t-green">✓ Vercel detected React</div>
+              <div className="t-line">  Installing dependencies...</div>
+              <div className="t-line">  Building... <span className="t-spinner">⠋</span></div>
+            </div>
+          )}
+          {state === 'done' && (
+            <div className="t-building">
+              <div className="t-line">$ git push origin main</div>
+              <div className="t-line t-green">✓ Build complete (28s)</div>
+              <div className="t-line t-green">✓ Deployed to edge network</div>
+              <div className="t-line t-accent">🎉 https://my-app.vercel.app</div>
+            </div>
+          )}
+        </div>
       </div>
-      <p className="project-desc">{project.desc}</p>
-      <div className="project-meta">
-        <span className="lang-badge" style={{ color: project.color, borderColor: project.color + '44', background: project.color + '11' }}>{project.lang}</span>
-        <span className="stars">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          {project.stars}
-        </span>
-      </div>
-      {hovered && <div className="card-glow" style={{ background: project.color }} />}
+      <button
+        className={`deploy-btn ${state}`}
+        onClick={handleDeploy}
+      >
+        {state === 'idle' && '▶ Simulate a Deploy'}
+        {state === 'building' && '⠋ Building...'}
+        {state === 'done' && '✓ Live! Run again?'}
+      </button>
     </div>
   )
 }
 
 export default function App() {
-  const [clicks, setClicks] = useState(0)
-  const role = useTyped(['Data Scientist', 'Data Engineer', 'ML Engineer', 'Problem Solver'])
-  const deployedAt = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const [activeStep, setActiveStep] = useState(0)
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveStep(s => (s + 1) % STEPS.length), 2500)
+    return () => clearInterval(t)
+  }, [])
 
   return (
     <div className="app">
+      {/* Nav */}
       <nav className="nav">
-        <div className="nav-logo"><span className="logo-dot" />devpulse</div>
-        <div className="nav-right">
-          <span className="deployed-badge"><span className="deploy-dot" />deployed {deployedAt}</span>
+        <div className="nav-logo">
+          <svg width="18" height="18" viewBox="0 0 76 65" fill="currentColor"><path d="M37.532 0L75.065 64.5H0L37.532 0z"/></svg>
+          Vercel
+        </div>
+        <div className="nav-links">
+          <span>Deploy in 30s</span>
+          <a className="nav-cta" href="https://vercel.com" target="_blank" rel="noreferrer">Try it free ↗</a>
         </div>
       </nav>
 
-      <header className="hero">
-        <div className="hero-tag">available for hire</div>
-        <h1 className="hero-name">Prajwal Tidke</h1>
-        <p className="hero-role"><span className="typed">{role}</span><span className="cursor">|</span></p>
-        <div className="hero-actions">
-          <button className="btn-secondary" onClick={() => setClicks(c => c + 1)}>
-            {clicks === 0 ? 'Say hello 👋' : `Said hello ${clicks}x 🎉`}
-          </button>
-        </div>
-      </header>
+      {/* Hero */}
+      <section className="hero">
+        <div className="hero-eyebrow">Ship faster. Scale automatically.</div>
+        <h1 className="hero-headline">
+          From <span className="hl-code">git push</span><br />
+          to <span className="hl-live">live in 30s</span>
+        </h1>
+        <p className="hero-sub">
+          Vercel is the platform that takes your frontend code and makes it globally available — instantly, automatically, with zero server setup.
+        </p>
+        <DeployButton />
+      </section>
 
+      {/* How it works */}
       <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">Projects</h2>
-          <span className="section-count">{PROJECTS.length} repos</span>
-        </div>
-        <div className="projects-grid">
-          {PROJECTS.map((p, i) => <ProjectCard key={p.name} project={p} index={i} />)}
+        <div className="section-label">How it works</div>
+        <h2 className="section-title">Four steps. Zero headaches.</h2>
+        <div className="steps-wrap">
+          <div className="steps-list">
+            {STEPS.map((s, i) => (
+              <div
+                key={i}
+                className={`step-item ${activeStep === i ? 'step-active' : ''}`}
+                onClick={() => setActiveStep(i)}
+              >
+                <div className="step-num">{s.num}</div>
+                <div>
+                  <div className="step-title">{s.icon} {s.title}</div>
+                  <div className="step-desc">{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <AnimatedTimeline />
         </div>
       </section>
 
+      {/* Features */}
       <section className="section">
-        <div className="section-header"><h2 className="section-title">Stack</h2></div>
-        <div className="stack-row">
-          {STACK.map((s, i) => <span key={s} className="stack-chip" style={{ animationDelay: `${i * 60}ms` }}>{s}</span>)}
+        <div className="section-label">Features</div>
+        <h2 className="section-title">Everything you need. Nothing you don't.</h2>
+        <div className="features-grid">
+          {FEATURES.map((f, i) => (
+            <div key={i} className="feature-card" style={{ '--fc': f.color, animationDelay: `${i * 80}ms` }}>
+              <div className="feature-icon">{f.icon}</div>
+              <div className="feature-title">{f.title}</div>
+              <div className="feature-desc">{f.desc}</div>
+            </div>
+          ))}
         </div>
+      </section>
+
+      {/* Frameworks */}
+      <section className="section section-frameworks">
+        <div className="section-label">Compatibility</div>
+        <h2 className="section-title">Works with your stack.</h2>
+        <div className="fw-row">
+          {FRAMEWORKS.map((f, i) => (
+            <div key={f} className="fw-chip" style={{ animationDelay: `${i * 60}ms` }}>{f}</div>
+          ))}
+        </div>
+        <p className="fw-note">…and any framework that outputs static files or runs Node.js</p>
+      </section>
+
+      {/* Preview deployments callout */}
+      <section className="section section-preview">
+        <div className="preview-card">
+          <div className="preview-left">
+            <div className="section-label">Preview Deployments</div>
+            <h2 className="preview-title">Every PR. Its own live URL.</h2>
+            <p className="preview-desc">
+              Open a pull request on GitHub and Vercel automatically spins up a unique deployment for that branch. Share it with your team, your client, or your professor — before anything touches main.
+            </p>
+            <div className="preview-url">
+              🔗 my-app-<span className="url-branch">git-feature-nav</span>.vercel.app
+            </div>
+          </div>
+          <div className="preview-right">
+            <div className="pr-card">
+              <div className="pr-top">
+                <span className="pr-dot" />
+                <span className="pr-title">feat: add dark mode toggle</span>
+              </div>
+              <div className="pr-bot">
+                <div className="bot-avatar">▲</div>
+                <div className="bot-msg">
+                  <div className="bot-name">Vercel Bot</div>
+                  <div className="bot-text">✅ Preview ready → <span className="bot-link">Visit Preview</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="section cta-section">
+        <h2 className="cta-title">Ready to ship?</h2>
+        <p className="cta-sub">Connect your GitHub repo and deploy your first app in under 60 seconds. Free forever for personal projects.</p>
+        <a className="cta-btn" href="https://vercel.com/new" target="_blank" rel="noreferrer">
+          Start deploying → vercel.com/new
+        </a>
       </section>
 
       <footer className="footer">
-        <span className="footer-mono">Built with React · Deployed on Vercel</span>
-        <span className="footer-dot" />
-        <span className="footer-mono">Open source · Fork it</span>
+        <span className="footer-mono">Built with React · Deployed on Vercel · This site is the demo</span>
       </footer>
     </div>
   )
