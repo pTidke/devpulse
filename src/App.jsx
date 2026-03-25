@@ -164,7 +164,7 @@ export default function App() {
           Vercel
         </div>
         <div className="nav-links">
-          <span>Deploy in 30s</span>
+          <span>Deploy in 10s</span>
           <a className="nav-cta" href="https://vercel.com" target="_blank" rel="noreferrer">Try it free ↗</a>
         </div>
       </nav>
