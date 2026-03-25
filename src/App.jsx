@@ -174,7 +174,7 @@ export default function App() {
         <div className="hero-eyebrow">Ship faster. Scale automatically.</div>
         <h1 className="hero-headline">
           From <span className="hl-code">git push</span><br />
-          to <span className="hl-live">live in 30s</span>
+          to <span className="hl-live">live in 10s</span>
         </h1>
         <p className="hero-sub">
           Vercel is the platform that takes your frontend code and makes it globally available — instantly, automatically, with zero server setup.
